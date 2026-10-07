@@ -20,7 +20,7 @@
       <p class="rumus" id="rumusModel">dP/dt = r · P · (1 − P/K)</p>
       <p class="rumus" id="rumusAnalitik">P(t) = K / (1 + ((K − P₀)/P₀) · e^(−rt))</p>
     </header>
- 
+
     <main class="halaman">
       <div class="kolom-kiri">
         <section class="panel">
@@ -31,12 +31,12 @@
             <button id="btnSimpanSkenario" class="tombol">Simpan skenario</button>
           </div>
         </section>
- 
+
         <section class="panel">
           <h2>Parameter Model</h2>
           <div id="formParameter"></div>
         </section>
- 
+
         <section class="panel">
           <h2>Optimasi: cari r agar target tercapai</h2>
           <div class="baris-input">
@@ -56,7 +56,7 @@
           <button id="btnOpt" class="tombol tombol-utama">Cari r optimal</button>
           <button id="btnClear" class="tombol">Hapus hasil optimasi</button>
         </section>
- 
+
         <section class="panel">
           <h2>Simpan &amp; Muat Parameter (JSON)</h2>
           <textarea id="jsonBox" rows="6" placeholder='{"P0": 50, "r": 0.4, "K": 1000, "T": 30}'></textarea>
@@ -64,7 +64,7 @@
           <button id="btnMuat" class="tombol">Muat dari JSON</button>
         </section>
       </div>
- 
+
       <section class="panel panel-grafik">
         <h2>Populasi terhadap Waktu</h2>
         <div class="chartbox"><canvas id="chart"></canvas></div>
@@ -75,11 +75,11 @@
         <div id="info"></div>
       </section>
     </main>
- 
+
     <footer id="footer">
       <p>Tugas Kapita Selekta Komputasi · Program Studi Matematika</p>
     </footer>
- 
+
     <!-- urutan penting: model, optimasi, editor skenario, terakhir tampilan -->
     <script src="js/model.js"></script>
     <script src="js/optimasi.js"></script>

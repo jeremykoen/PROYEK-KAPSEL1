@@ -1,0 +1,279 @@
+/* ================= DASAR ================= */
+:root {
+  --bg: #eef3f1;
+  --panel: #ffffff;
+  --ink: #14302b;
+  --muted: #5b6f6a;
+  --garis: #cfdcd8;
+  --hijau: #1f7a63;
+  --amber: #c9831a;
+  --merah: #a23b2a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--bg);
+}
+
+/* ================= HEADER & FOOTER ================= */
+#header {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 28px 20px 8px;
+}
+
+#header h1 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+
+.rumus {
+  margin: 0 0 14px;
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-size: 19px;
+  color: var(--hijau);
+}
+
+#footer {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 20px 30px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ================= LAYOUT (GRID) ================= */
+.halaman {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px 20px 24px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+}
+
+.kolom-kiri {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (min-width: 860px) {
+  .halaman {
+    grid-template-columns: 340px 1fr;
+    align-items: start;
+  }
+}
+
+/* ================= PANEL (BOX MODEL) ================= */
+.panel {
+  background-color: var(--panel);
+  border: 1px solid var(--garis);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.panel h2 {
+  margin: 0 0 12px;
+  font-size: 16px;
+}
+
+/* ================= FORM PARAMETER ================= */
+.field {
+  margin-bottom: 12px;
+}
+
+.field label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input[type="range"] {
+  width: 100%;
+  accent-color: var(--hijau);
+}
+
+input[type="number"],
+textarea {
+  padding: 6px;
+  border: 1px solid var(--garis);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--ink);
+}
+
+.field input[type="number"] {
+  width: 90px;
+}
+
+.baris-input {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.baris-input label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.baris-input input {
+  width: 100%;
+}
+
+textarea {
+  width: 100%;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  resize: vertical;
+}
+
+/* ================= TOMBOL ================= */
+.tombol {
+  margin-top: 8px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--muted);
+  background-color: transparent;
+  border: 1px solid var(--garis);
+  border-radius: 8px;
+}
+
+.tombol:hover {
+  border-color: var(--hijau);
+  color: var(--hijau);
+}
+
+.tombol-utama {
+  color: #fff;
+  background-color: var(--amber);
+  border-color: var(--amber);
+}
+
+.tombol-utama:hover {
+  color: #fff;
+  background-color: #b07414;
+  border-color: #b07414;
+}
+
+.chip {
+  margin: 0 6px 6px 0;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  color: var(--hijau);
+  background-color: #e4f1ed;
+  border: 1px solid #b9d9cf;
+  border-radius: 20px;
+}
+
+.chip:hover {
+  background-color: #d3e9e2;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #86c5b4;
+  outline-offset: 2px;
+}
+
+/* ================= GRAFIK & INFO ================= */
+.chartbox {
+  position: relative;
+  height: 380px;
+}
+
+#info {
+  margin-top: 12px;
+  min-height: 3em;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+#info strong {
+  color: var(--ink);
+}
+
+.error {
+  color: var(--merah);
+}
+
+/* ================= TAMBAHAN FRONTEND (skenario & perbandingan) ================= */
+.chip-grup {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 6px 6px 0;
+}
+
+.chip-grup .chip {
+  margin: 0;
+}
+
+.chip-hapus {
+  margin-left: 2px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  font: inherit;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--merah);
+  background-color: transparent;
+  border: 1px solid var(--garis);
+  border-radius: 50%;
+}
+
+.chip-hapus:hover {
+  background-color: #f6e3df;
+}
+
+.baris-simpan {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.baris-simpan input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  padding: 6px;
+  border: 1px solid var(--garis);
+  border-radius: 6px;
+  font: inherit;
+  color: var(--ink);
+}
+
+.baris-simpan .tombol {
+  margin-top: 0;
+}
+
+.aksi-grafik {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.aksi-grafik .tombol {
+  margin-top: 0;
+}
