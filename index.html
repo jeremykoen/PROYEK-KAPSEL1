@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulator Populasi Logistik</title>
+    <link rel="stylesheet" type="text/css" href="css/app.css" />
+    <!-- KaTeX untuk menampilkan rumus -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+    <!-- Chart.js untuk menggambar grafik -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <!-- data skenario bawaan (pola sama seperti questions.json di proyek quiz) -->
+    <script src="json/skenario.js"></script>
+  </head>
+  <body>
+    <header id="header">
+      <h1>Simulator Populasi Logistik</h1>
+      <!-- teks di bawah ini cadangan; kalau KaTeX berhasil dimuat, diganti rumus cantik -->
+      <p class="rumus" id="rumusModel">dP/dt = r · P · (1 − P/K)</p>
+      <p class="rumus" id="rumusAnalitik">P(t) = K / (1 + ((K − P₀)/P₀) · e^(−rt))</p>
+    </header>
+ 
+    <main class="halaman">
+      <div class="kolom-kiri">
+        <section class="panel">
+          <h2>Skenario</h2>
+          <div id="skenarioBox"></div>
+          <div class="baris-simpan">
+            <input type="text" id="namaSkenario" placeholder="Nama skenario baru" maxlength="30" />
+            <button id="btnSimpanSkenario" class="tombol">Simpan skenario</button>
+          </div>
+        </section>
+ 
+        <section class="panel">
+          <h2>Parameter Model</h2>
+          <div id="formParameter"></div>
+        </section>
+ 
+        <section class="panel">
+          <h2>Optimasi: cari r agar target tercapai</h2>
+          <div class="baris-input">
+            <label for="pTarget">Populasi target
+              <input type="number" id="pTarget" value="900" />
+            </label>
+            <label for="tTarget">Pada waktu
+              <input type="number" id="tTarget" value="15" />
+            </label>
+            <label for="rMin">r minimum
+              <input type="number" id="rMin" step="0.01" value="0.01" />
+            </label>
+            <label for="rMax">r maksimum
+              <input type="number" id="rMax" step="0.01" value="2" />
+            </label>
+          </div>
+          <button id="btnOpt" class="tombol tombol-utama">Cari r optimal</button>
+          <button id="btnClear" class="tombol">Hapus hasil optimasi</button>
+        </section>
+ 
+        <section class="panel">
+          <h2>Simpan &amp; Muat Parameter (JSON)</h2>
+          <textarea id="jsonBox" rows="6" placeholder='{"P0": 50, "r": 0.4, "K": 1000, "T": 30}'></textarea>
+          <button id="btnSimpan" class="tombol">Simpan ke JSON</button>
+          <button id="btnMuat" class="tombol">Muat dari JSON</button>
+        </section>
+      </div>
+ 
+      <section class="panel panel-grafik">
+        <h2>Populasi terhadap Waktu</h2>
+        <div class="chartbox"><canvas id="chart"></canvas></div>
+        <div class="aksi-grafik">
+          <button id="btnTambahKurva" class="tombol tombol-utama">Tambahkan ke perbandingan</button>
+          <button id="btnHapusKurva" class="tombol">Hapus semua perbandingan</button>
+        </div>
+        <div id="info"></div>
+      </section>
+    </main>
+ 
+    <footer id="footer">
+      <p>Tugas Kapita Selekta Komputasi · Program Studi Matematika</p>
+    </footer>
+ 
+    <!-- urutan penting: model, optimasi, editor skenario, terakhir tampilan -->
+    <script src="js/model.js"></script>
+    <script src="js/optimasi.js"></script>
+    <script src="js/skenario-editor.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>
