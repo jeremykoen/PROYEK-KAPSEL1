@@ -10,77 +10,127 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
     <!-- Chart.js untuk menggambar grafik -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-    <!-- data skenario bawaan (pola sama seperti questions.json di proyek quiz) -->
+    <!-- data skenario bawaan -->
     <script src="json/skenario.js"></script>
   </head>
   <body>
     <header id="header">
       <h1>Simulator Populasi Logistik</h1>
-      <!-- teks di bawah ini cadangan; kalau KaTeX berhasil dimuat, diganti rumus cantik -->
       <p class="rumus" id="rumusModel">dP/dt = r · P · (1 − P/K)</p>
       <p class="rumus" id="rumusAnalitik">P(t) = K / (1 + ((K − P₀)/P₀) · e^(−rt))</p>
     </header>
- 
+
     <main class="halaman">
+      <!-- KOLOM KIRI: FULL UNTUK ATUR PARAMETER & TOOLS -->
       <div class="kolom-kiri">
+        <!-- Panel 1: Skenario -->
         <section class="panel">
           <h2>Skenario</h2>
           <div id="skenarioBox"></div>
           <div class="baris-simpan">
-            <input type="text" id="namaSkenario" placeholder="Nama skenario baru" maxlength="30" />
-            <button id="btnSimpanSkenario" class="tombol">Simpan skenario</button>
+            <input type="text" id="namaSkenario" placeholder="Nama skenario baru" maxlength="100">
+            <button type="button" id="btnSimpanSkenario" class="tombol">Simpan skenario</button>
           </div>
         </section>
- 
+
+        <!-- Panel 2: Label Sumbu Grafik -->
+        <section class="panel">
+          <h2>Label Sumbu Grafik</h2>
+          <div class="baris-input">
+            <label for="labelX">
+              Sumbu X (Waktu)
+              <input type="text" id="labelX" value="Waktu (t)" placeholder="misal: Bulan, Hari, Minggu">
+            </label>
+            <label for="labelY">
+              Sumbu Y (Populasi/Unit)
+              <input type="text" id="labelY" value="Populasi P(t)" placeholder="misal: Pengguna, % Progres, Orang">
+            </label>
+          </div>
+        </section>
+
+        <!-- Panel 3: Parameter Model -->
         <section class="panel">
           <h2>Parameter Model</h2>
           <div id="formParameter"></div>
         </section>
- 
+
+        <!-- Panel 4: Optimasi -->
         <section class="panel">
           <h2>Optimasi: cari r agar target tercapai</h2>
           <div class="baris-input">
-            <label for="pTarget">Populasi target
-              <input type="number" id="pTarget" value="900" />
+            <label for="pTarget">
+              Populasi target
+              <input type="number" id="pTarget" value="900">
             </label>
-            <label for="tTarget">Pada waktu
-              <input type="number" id="tTarget" value="15" />
+            <label for="tTarget">
+              Pada waktu
+              <input type="number" id="tTarget" value="15">
             </label>
-            <label for="rMin">r minimum
-              <input type="number" id="rMin" step="0.01" value="0.01" />
+            <label for="rMin">
+              r minimum
+              <input type="number" id="rMin" step="0.01" value="0.01">
             </label>
-            <label for="rMax">r maksimum
-              <input type="number" id="rMax" step="0.01" value="2" />
+            <label for="rMax">
+              r maksimum
+              <input type="number" id="rMax" step="0.01" value="2">
             </label>
           </div>
-          <button id="btnOpt" class="tombol tombol-utama">Cari r optimal</button>
-          <button id="btnClear" class="tombol">Hapus hasil optimasi</button>
+          <button type="button" id="btnOpt" class="tombol tombol-utama">Cari r optimal</button>
+          <button type="button" id="btnClear" class="tombol">Hapus hasil optimasi</button>
         </section>
- 
+
+        <!-- Panel 5: JSON -->
         <section class="panel">
           <h2>Simpan &amp; Muat Parameter (JSON)</h2>
-          <textarea id="jsonBox" rows="6" placeholder='{"P0": 50, "r": 0.4, "K": 1000, "T": 30}'></textarea>
-          <button id="btnSimpan" class="tombol">Simpan ke JSON</button>
-          <button id="btnMuat" class="tombol">Muat dari JSON</button>
+          <textarea id="jsonBox" rows="6" placeholder="{&quot;P0&quot;: 50, &quot;r&quot;: 0.4, &quot;K&quot;: 1000, &quot;T&quot;: 30}"></textarea>
+          <button type="button" id="btnSimpan" class="tombol">Simpan ke JSON</button>
+          <button type="button" id="btnMuat" class="tombol">Muat dari JSON</button>
         </section>
       </div>
- 
-      <section class="panel panel-grafik">
-        <h2>Populasi terhadap Waktu</h2>
-        <div class="chartbox"><canvas id="chart"></canvas></div>
-        <div class="aksi-grafik">
-          <button id="btnTambahKurva" class="tombol tombol-utama">Tambahkan ke perbandingan</button>
-          <button id="btnHapusKurva" class="tombol">Hapus semua perbandingan</button>
-        </div>
-        <div id="info"></div>
-      </section>
+
+      <!-- KOLOM KANAN: GRAFIK & PERBANDINGAN & EKSPOR -->
+      <div class="kolom-kanan">
+        <section class="panel panel-grafik">
+          <h2>Populasi terhadap Waktu</h2>
+          <div class="chartbox">
+            <canvas id="chart"></canvas>
+          </div>
+          <div id="info"></div>
+
+          <!-- Tombol Ekspor Excel -->
+          <div style="margin-top: 12px; display: flex; gap: 8px;">
+            <button type="button" id="btnExportExcel" class="tombol tombol-utama">
+              📊 Ekspor Hasil ke Excel (.xls)
+            </button>
+          </div>
+
+          <hr class="pembatas-grafik" />
+
+          <!-- Kelola Perbandingan di Bawah Grafik -->
+          <div class="area-perbandingan-bawah">
+            <div class="sub-panel">
+              <h3>Tambah ke Perbandingan</h3>
+              <div class="baris-simpan">
+                <input type="text" id="namaModelBaru" placeholder="Nama model (contoh: Skenario Pestisida)">
+                <button type="button" id="btnTambahModel" class="tombol tombol-utama">
+                  + Tambah ke Daftar
+                </button>
+              </div>
+            </div>
+
+            <div class="sub-panel">
+              <h3>Daftar Model Perbandingan</h3>
+              <div id="daftarModelContainer"></div>
+            </div>
+          </div>
+        </section>
+      </div>
     </main>
- 
+
     <footer id="footer">
       <p>Tugas Kapita Selekta Komputasi · Program Studi Matematika</p>
     </footer>
- 
-    <!-- urutan penting: model, optimasi, editor skenario, terakhir tampilan -->
+
     <script src="js/model.js"></script>
     <script src="js/optimasi.js"></script>
     <script src="js/skenario-editor.js"></script>
