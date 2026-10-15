@@ -1,244 +1,269 @@
 (() => {
   "use strict";
 
-  const DEFAULT_PARAMETER = {
-    P0: 50,
-    r: 0.4,
-    K: 1000,
-    T: 30,
-  };
-
+  let currentModel = "logistic";
   let chart = null;
   let perbandingan = [];
+  let compareNo = 0;
   let pesanTambahan = "";
   let rSebelumOptimasi = null;
 
-  const warnaKurva = [
-    "#2563eb",
-    "#dc2626",
-    "#059669",
-    "#7c3aed",
-    "#d97706",
-    "#0891b2",
-    "#be123c",
-    "#4f46e5",
+  const colors = [
+    "#2563eb", "#dc2626", "#059669", "#7c3aed",
+    "#d97706", "#0891b2", "#be123c", "#4f46e5",
   ];
 
-  function formatAngka(value, digit = 2) {
+  function format(value, digits=2) {
     const n = Number(value);
     if (!Number.isFinite(n)) return "-";
-
     return new Intl.NumberFormat("id-ID", {
-      maximumFractionDigits: digit,
+      maximumFractionDigits: digits,
     }).format(n);
+  }
+
+  function escapeHtml(text) {
+    return String(text)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function currentValues() {
+    const values = {};
+    document.querySelectorAll("#dynamicParams input").forEach((input) => {
+      values[input.dataset.key] = Number(input.value);
+    });
+    return values;
+  }
+
+  function renderParams(seed={}) {
+    const def = window.ModelPopulasi.definition(currentModel);
+    const defaults = window.ModelPopulasi.defaults(currentModel);
+
+    document.getElementById("dynamicParams").innerHTML = def.params
+      .map(([key,label,defaultValue,step]) => {
+        const value = seed[key] ?? defaults[key] ?? defaultValue;
+        return `
+          <div class="field">
+            <label>
+              ${label}
+              <input
+                type="number"
+                id="${key}"
+                data-key="${key}"
+                value="${value}"
+                step="${step}"
+              />
+            </label>
+          </div>
+        `;
+      })
+      .join("");
+
+    document.querySelectorAll("#dynamicParams input").forEach((input) => {
+      input.addEventListener("input", () => {
+        pesanTambahan = "";
+        rSebelumOptimasi = null;
+        updateGrafik();
+      });
+    });
   }
 
   function buatFormParameter() {
     const box = document.getElementById("formParameter");
 
     box.innerHTML = `
-      <div class="baris-input">
-        <label for="P0">
-          Populasi awal (P₀)
-          <input type="number" id="P0" min="0.0001" step="1" value="${DEFAULT_PARAMETER.P0}" />
-        </label>
-
-        <label for="r">
-          Growth rate (r)
-          <input type="number" id="r" min="0" step="0.01" value="${DEFAULT_PARAMETER.r}" />
-        </label>
-
-        <label for="K">
-          Carrying capacity (K)
-          <input type="number" id="K" min="0.0001" step="1" value="${DEFAULT_PARAMETER.K}" />
-        </label>
-
-        <label for="T">
-          Waktu simulasi (T)
-          <input type="number" id="T" min="0.0001" step="1" value="${DEFAULT_PARAMETER.T}" />
+      <div class="field">
+        <label>
+          Pilih model populasi
+          <select id="modelSelect">
+            ${Object.entries(window.ModelPopulasi.models)
+              .map(([id, model]) =>
+                `<option value="${id}" ${id===currentModel?"selected":""}>${model.name}</option>`,
+              )
+              .join("")}
+          </select>
         </label>
       </div>
+
+      <p id="modelFormulaInfo"></p>
+      <div id="dynamicParams"></div>
     `;
 
-    ["P0", "r", "K", "T"].forEach((id) => {
-      document.getElementById(id).addEventListener("input", () => {
-        rSebelumOptimasi = null;
-        pesanTambahan = "";
-        updateGrafik();
+    renderParams();
+
+    document.getElementById("modelSelect").addEventListener("change", (e) => {
+      const oldValues = currentValues();
+      currentModel = e.target.value;
+
+      const wanted = window.ModelPopulasi.defaults(currentModel);
+      const transferable = {};
+      Object.keys(wanted).forEach((key) => {
+        if (oldValues[key] !== undefined) transferable[key] = oldValues[key];
       });
+
+      renderParams(transferable);
+      updateModelInfo();
+      pesanTambahan = "";
+      rSebelumOptimasi = null;
+      updateGrafik();
     });
+
+    updateModelInfo();
   }
 
-  function getParameter() {
-    const parameter = {
-      P0: Number(document.getElementById("P0").value),
-      r: Number(document.getElementById("r").value),
-      K: Number(document.getElementById("K").value),
-      T: Number(document.getElementById("T").value),
-    };
+  function updateModelInfo() {
+    const def = window.ModelPopulasi.definition(currentModel);
 
-    return window.ModelLogistik.validasiParameter(parameter);
-  }
+    document.getElementById("modelFormulaInfo").textContent =
+      `${def.formula} — ${def.analytic}`;
 
-  function setParameter(parameter) {
-    const gabungan = {
-      ...getParameterAman(),
-      ...parameter,
-    };
+    document.getElementById("rumusModel").textContent = def.formula;
+    document.getElementById("rumusAnalitik").textContent = def.analytic;
 
-    const valid = window.ModelLogistik.validasiParameter(gabungan);
-
-    document.getElementById("P0").value = valid.P0;
-    document.getElementById("r").value = valid.r;
-    document.getElementById("K").value = valid.K;
-    document.getElementById("T").value = valid.T;
-
-    rSebelumOptimasi = null;
-    pesanTambahan = "";
-    updateGrafik();
-  }
-
-  function getParameterAman() {
-    try {
-      return getParameter();
-    } catch {
-      return { ...DEFAULT_PARAMETER };
+    // Optimasi r yang lama hanya dipakai untuk logistic.
+    const btnOpt = document.getElementById("btnOpt");
+    if (btnOpt) {
+      btnOpt.disabled = currentModel !== "logistic";
+      btnOpt.title =
+        currentModel === "logistic"
+          ? ""
+          : "Untuk sekarang optimasi r hanya aktif pada Logistic Growth.";
     }
   }
 
-  function buatChart() {
-    const canvas = document.getElementById("chart");
+  function getRawParameter() {
+    const params = currentValues();
+    return window.ModelPopulasi.validate(currentModel, params);
+  }
 
-    chart = new Chart(canvas, {
+  function getParameter() {
+    return {
+      model: currentModel,
+      ...getRawParameter(),
+    };
+  }
+
+  function getParameterForScenario() {
+    // Kompatibilitas dengan skenario-editor.js lama.
+    const data = getParameter();
+    return {
+      ...data,
+      P0: data.P0 ?? 50,
+      r: data.r ?? 0.4,
+      K: data.K ?? 1000,
+      T: data.T ?? 30,
+    };
+  }
+
+  function setParameter(data) {
+    currentModel = data.model || "logistic";
+
+    if (!window.ModelPopulasi.models[currentModel]) {
+      currentModel = "logistic";
+    }
+
+    const select = document.getElementById("modelSelect");
+    if (select) select.value = currentModel;
+
+    renderParams(data);
+    updateModelInfo();
+    pesanTambahan = "";
+    rSebelumOptimasi = null;
+    updateGrafik();
+  }
+
+  function buatChart() {
+    chart = new Chart(document.getElementById("chart"), {
       type: "line",
-      data: {
-        datasets: [
-          {
-            label: "Simulasi aktif",
-            data: [],
-            borderWidth: 3,
-            pointRadius: 0,
-            tension: 0.15,
-            borderColor: warnaKurva[0],
-          },
-        ],
-      },
+      data: {datasets: []},
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        animation: {
-          duration: 250,
-        },
-        interaction: {
-          intersect: false,
-          mode: "nearest",
-        },
         parsing: false,
+        interaction: {intersect:false, mode:"nearest"},
         scales: {
           x: {
-            type: "linear",
-            title: {
-              display: true,
-              text: "Waktu (t)",
-            },
+            type:"linear",
+            title:{display:true,text:"Waktu (t)"},
           },
           y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: "Populasi P(t)",
-            },
+            beginAtZero:true,
+            title:{display:true,text:"Populasi"},
           },
         },
         plugins: {
-          tooltip: {
-            callbacks: {
-              label(context) {
-                const y = context.parsed.y;
-                return `${context.dataset.label}: ${formatAngka(y, 3)}`;
-              },
-            },
-          },
-          legend: {
-            position: "bottom",
-          },
+          legend:{position:"bottom"},
         },
       },
     });
+  }
+
+  function activeDatasets(series) {
+    return series.map((s,index) => ({
+      label: `Aktif · ${s.label}`,
+      data: s.data,
+      borderColor: colors[index % colors.length],
+      borderWidth: 3,
+      pointRadius: 0,
+      tension: 0.12,
+    }));
   }
 
   function updateGrafik() {
     try {
-      const parameter = getParameter();
-      const dataUtama = window.ModelLogistik.buatDataPopulasi(parameter);
+      const params = getRawParameter();
+      const series = window.ModelPopulasi.simulate(currentModel, params);
 
       chart.data.datasets = [
-        {
-          label: `Aktif · P₀=${formatAngka(parameter.P0)} · r=${formatAngka(
-            parameter.r,
-            5,
-          )} · K=${formatAngka(parameter.K)}`,
-          data: dataUtama,
-          borderWidth: 3,
-          pointRadius: 0,
-          tension: 0.15,
-          borderColor: warnaKurva[0],
-        },
+        ...activeDatasets(series),
         ...perbandingan,
       ];
-
       chart.update();
 
-      const pAkhir = window.ModelLogistik.populasiLogistik(
-        parameter.T,
-        parameter.P0,
-        parameter.r,
-        parameter.K,
-      );
+      const lastInfo = series
+        .map((s) => {
+          const last = s.data[s.data.length-1];
+          return `${s.label} ≈ <strong>${format(last.y,3)}</strong>`;
+        })
+        .join(" · ");
 
-      const info = document.getElementById("info");
-      info.innerHTML = `
+      document.getElementById("info").innerHTML = `
         <p>
-          <strong>Hasil simulasi:</strong>
-          pada t = ${formatAngka(parameter.T)},
-          populasi ≈ <strong>${formatAngka(pAkhir, 3)}</strong>.
-          Carrying capacity K = ${formatAngka(parameter.K)}.
+          <strong>${escapeHtml(window.ModelPopulasi.definition(currentModel).name)}</strong>:
+          pada t = ${format(params.T)}, ${lastInfo}.
         </p>
         ${pesanTambahan ? `<p>${pesanTambahan}</p>` : ""}
       `;
     } catch (error) {
-      const info = document.getElementById("info");
-      info.innerHTML = `<p><strong>Periksa parameter:</strong> ${escapeHtml(
-        error.message,
-      )}</p>`;
+      document.getElementById("info").innerHTML =
+        `<p class="error">${escapeHtml(error.message)}</p>`;
     }
   }
 
-  function escapeHtml(teks) {
-    return String(teks)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
   function lakukanOptimasi() {
+    if (currentModel !== "logistic") {
+      pesanTambahan =
+        "<strong>Optimasi r saat ini hanya tersedia untuk Logistic Growth.</strong>";
+      updateGrafik();
+      return;
+    }
+
     try {
-      const parameter = getParameter();
+      const params = getRawParameter();
 
       const pTarget = Number(document.getElementById("pTarget").value);
       const tTarget = Number(document.getElementById("tTarget").value);
       const rMin = Number(document.getElementById("rMin").value);
       const rMax = Number(document.getElementById("rMax").value);
 
-      if (rSebelumOptimasi === null) {
-        rSebelumOptimasi = parameter.r;
-      }
+      if (rSebelumOptimasi === null) rSebelumOptimasi = params.r;
 
       const hasil = window.OptimasiPopulasi.cariROptimal({
-        P0: parameter.P0,
-        K: parameter.K,
+        P0: params.P0,
+        K: params.K,
         pTarget,
         tTarget,
         rMin,
@@ -247,31 +272,24 @@
 
       document.getElementById("r").value = hasil.rOptimal.toFixed(8);
 
-      const statusRentang = hasil.targetDalamRentang
-        ? "Target dapat dicapai dalam rentang r yang diberikan."
-        : "Target berada di luar hasil yang dapat dicapai pada rentang r tersebut; ditampilkan r dengan error terkecil.";
-
       pesanTambahan = `
-        <strong>Optimasi:</strong>
-        r optimal ≈ <strong>${formatAngka(hasil.rOptimal, 8)}</strong>,
-        menghasilkan P(${formatAngka(tTarget)}) ≈
-        <strong>${formatAngka(hasil.populasiHasil, 4)}</strong>,
-        error ≈ ${formatAngka(hasil.error, 6)}.
-        ${statusRentang}
+        <strong>r optimal ≈ ${format(hasil.rOptimal,8)}</strong>,
+        P(${format(tTarget)}) ≈ ${format(hasil.populasiHasil,4)},
+        error ≈ ${format(hasil.error,6)}.
       `;
 
       updateGrafik();
     } catch (error) {
-      pesanTambahan = `<strong>Optimasi gagal:</strong> ${escapeHtml(
-        error.message,
-      )}`;
+      pesanTambahan = `<strong>Optimasi gagal:</strong> ${escapeHtml(error.message)}`;
       updateGrafik();
     }
   }
 
   function hapusHasilOptimasi() {
-    if (rSebelumOptimasi !== null) {
-      document.getElementById("r").value = rSebelumOptimasi;
+    const inputR = document.getElementById("r");
+
+    if (inputR && rSebelumOptimasi !== null) {
+      inputR.value = rSebelumOptimasi;
     }
 
     rSebelumOptimasi = null;
@@ -281,157 +299,82 @@
 
   function tambahPerbandingan() {
     try {
-      const parameter = getParameter();
-      const indeks = perbandingan.length + 1;
-      const warna = warnaKurva[(indeks + 1) % warnaKurva.length];
+      const params = getRawParameter();
+      const series = window.ModelPopulasi.simulate(currentModel, params);
+      const modelName = window.ModelPopulasi.definition(currentModel).name;
 
-      perbandingan.push({
-        label: `Perbandingan ${indeks} · P₀=${formatAngka(
-          parameter.P0,
-        )} · r=${formatAngka(parameter.r, 5)} · K=${formatAngka(parameter.K)}`,
-        data: window.ModelLogistik.buatDataPopulasi(parameter),
-        borderWidth: 2,
-        pointRadius: 0,
-        tension: 0.15,
-        borderDash: [7, 4],
-        borderColor: warna,
+      compareNo += 1;
+
+      series.forEach((s,index) => {
+        perbandingan.push({
+          label: `Perbandingan ${compareNo} · ${modelName} · ${s.label}`,
+          data: s.data,
+          borderColor: colors[(compareNo+index+1)%colors.length],
+          borderWidth: 2,
+          borderDash: [7,4],
+          pointRadius: 0,
+          tension: 0.12,
+        });
       });
 
-      pesanTambahan = `Kurva saat ini ditambahkan sebagai perbandingan ${indeks}.`;
+      pesanTambahan = `Simulasi ditambahkan sebagai perbandingan ${compareNo}.`;
       updateGrafik();
     } catch (error) {
-      pesanTambahan = `<strong>Gagal menambah perbandingan:</strong> ${escapeHtml(
-        error.message,
-      )}`;
+      pesanTambahan = escapeHtml(error.message);
       updateGrafik();
     }
   }
 
   function hapusPerbandingan() {
     perbandingan = [];
+    compareNo = 0;
     pesanTambahan = "Semua kurva perbandingan dihapus.";
     updateGrafik();
   }
 
   function simpanKeJson() {
     try {
-      const parameter = getParameter();
-      document.getElementById("jsonBox").value = JSON.stringify(
-        parameter,
-        null,
-        2,
-      );
-
-      pesanTambahan = "Parameter aktif sudah disalin ke kotak JSON.";
-      updateGrafik();
+      document.getElementById("jsonBox").value =
+        JSON.stringify(getParameter(), null, 2);
     } catch (error) {
-      pesanTambahan = `<strong>Gagal menyimpan JSON:</strong> ${escapeHtml(
-        error.message,
-      )}`;
+      pesanTambahan = escapeHtml(error.message);
       updateGrafik();
     }
   }
 
   function muatDariJson() {
     try {
-      const raw = document.getElementById("jsonBox").value.trim();
-
-      if (!raw) {
-        throw new Error("Kotak JSON masih kosong.");
-      }
-
-      const data = JSON.parse(raw);
-
-      const parameter = {
-        P0: Number(data.P0),
-        r: Number(data.r),
-        K: Number(data.K),
-        T: Number(data.T),
-      };
-
-      window.ModelLogistik.validasiParameter(parameter);
-
-      document.getElementById("P0").value = parameter.P0;
-      document.getElementById("r").value = parameter.r;
-      document.getElementById("K").value = parameter.K;
-      document.getElementById("T").value = parameter.T;
-
-      rSebelumOptimasi = null;
+      const data = JSON.parse(document.getElementById("jsonBox").value);
+      setParameter(data);
       pesanTambahan = "Parameter berhasil dimuat dari JSON.";
       updateGrafik();
     } catch (error) {
-      pesanTambahan = `<strong>JSON tidak valid:</strong> ${escapeHtml(
-        error.message,
-      )}`;
+      pesanTambahan = `<strong>JSON tidak valid:</strong> ${escapeHtml(error.message)}`;
       updateGrafik();
-    }
-  }
-
-  function renderRumus() {
-    if (!window.katex) return;
-
-    try {
-      katex.render(
-        String.raw`\frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)`,
-        document.getElementById("rumusModel"),
-        { throwOnError: false },
-      );
-
-      katex.render(
-        String.raw`P(t)=\frac{K}{1+\left(\frac{K-P_0}{P_0}\right)e^{-rt}}`,
-        document.getElementById("rumusAnalitik"),
-        { throwOnError: false },
-      );
-    } catch (error) {
-      console.warn("KaTeX gagal dirender:", error);
     }
   }
 
   function pasangEvent() {
     document.getElementById("btnOpt").addEventListener("click", lakukanOptimasi);
-    document
-      .getElementById("btnClear")
-      .addEventListener("click", hapusHasilOptimasi);
-
-    document
-      .getElementById("btnTambahKurva")
-      .addEventListener("click", tambahPerbandingan);
-
-    document
-      .getElementById("btnHapusKurva")
-      .addEventListener("click", hapusPerbandingan);
-
-    document
-      .getElementById("btnSimpan")
-      .addEventListener("click", simpanKeJson);
-
+    document.getElementById("btnClear").addEventListener("click", hapusHasilOptimasi);
+    document.getElementById("btnTambahKurva").addEventListener("click", tambahPerbandingan);
+    document.getElementById("btnHapusKurva").addEventListener("click", hapusPerbandingan);
+    document.getElementById("btnSimpan").addEventListener("click", simpanKeJson);
     document.getElementById("btnMuat").addEventListener("click", muatDariJson);
-
-    ["pTarget", "tTarget", "rMin", "rMax"].forEach((id) => {
-      document.getElementById(id).addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          lakukanOptimasi();
-        }
-      });
-    });
   }
 
   function init() {
     buatFormParameter();
     buatChart();
-    renderRumus();
     pasangEvent();
 
     window.SkenarioEditor.init({
-      getParameter,
+      getParameter: getParameterForScenario,
       onPilih: setParameter,
     });
 
-    document.getElementById("jsonBox").value = JSON.stringify(
-      DEFAULT_PARAMETER,
-      null,
-      2,
-    );
+    document.getElementById("jsonBox").value =
+      JSON.stringify(getParameter(), null, 2);
 
     updateGrafik();
   }
@@ -440,6 +383,7 @@
     getParameter,
     setParameter,
     updateGrafik,
+    getModel: () => currentModel,
   };
 
   init();
