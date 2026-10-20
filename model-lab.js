@@ -18,73 +18,77 @@
       description: "Pertumbuhan tanpa carrying capacity.",
       formula: String.raw`\frac{dP}{dt}=rP`,
       solution: String.raw`P(t)=P_0e^{rt}`,
-      defaults: { P0: 40, r: 0.22, K: 1000, T: 24 },
     },
     logistic: {
       name: "Logistic Growth",
       description: "Pertumbuhan dengan carrying capacity K.",
       formula: String.raw`\frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)`,
       solution: String.raw`P(t)=\frac{K}{1+\left(\frac{K-P_0}{P_0}\right)e^{-rt}}`,
-      defaults: { P0: 50, r: 0.4, K: 1000, T: 30 },
     },
     harvesting: {
       name: "Logistic + Harvesting",
       description: "Model logistik dengan pengurangan populasi konstan H.",
       formula: String.raw`\frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)-H`,
       solution: "Simulasi numerik RK4",
-      defaults: { P0: 140, r: 0.5, K: 1000, T: 30, H: 70 },
     },
     predatorPrey: {
       name: "Predator–Prey",
-      description: "Model dua populasi Lotka–Volterra. Grafik utama menampilkan prey.",
+      description: "Model dua populasi Lotka–Volterra. Tiny World menampilkan prey sebagai populasi utama.",
       formula: String.raw`\frac{dP}{dt}=\alpha P-\beta PQ,\quad \frac{dQ}{dt}=\gamma PQ-\delta Q`,
       solution: "Simulasi numerik RK4",
-      defaults: { P0: 60, K: 1000, T: 30, Q0: 9, alpha: 0.6, beta: 0.025, gamma: 0.015, delta: 0.5 },
     },
   };
 
   const THEMES = {
     forest: {
       label: "🌲 Forest",
-      desc: "Hutan hijau dengan populasi kelinci, rusa, pohon, dan kupu-kupu.",
-      emojis: ["🐇", "🦌", "🌲", "🦋", "🦔", "🍄"],
-      bg: "linear-gradient(180deg,#e9f7f0 0%,#f6fbf8 55%,#eef7f1 100%)",
+      desc: "Hutan hijau",
+      emojis: ["🐇", "🦌", "🦔", "🦋", "🌲", "🍄"],
       deco: "🌲 🌳 🌿 ☁️",
+      pageBg: "linear-gradient(180deg,#edf8f3 0%,#f7fbf9 60%,#eef7f2 100%)",
     },
     pond: {
       label: "🌊 Pond",
-      desc: "Kolam dengan ikan, katak, teratai, dan alga.",
-      emojis: ["🐟", "🐸", "🪷", "🦆", "🌿", "🦐"],
-      bg: "linear-gradient(180deg,#e8f8ff 0%,#f7fcff 55%,#eef8ff 100%)",
+      desc: "Kolam air",
+      emojis: ["🐟", "🐸", "🦆", "🦐", "🪷", "🐚"],
       deco: "☁️ 🌊 🪷 💧",
+      pageBg: "linear-gradient(180deg,#eefaff 0%,#f9fdff 60%,#eef9ff 100%)",
     },
     lab: {
       label: "🧫 Microbiology Lab",
-      desc: "Lab mini dengan mikroba dan eksperimen pertumbuhan.",
-      emojis: ["🦠", "🧫", "🔬", "🧪", "🫧", "✨"],
-      bg: "linear-gradient(180deg,#eef1ff 0%,#fafbff 55%,#f2f4ff 100%)",
+      desc: "Laboratorium mikrobiologi",
+      emojis: ["🦠", "🧫", "🧬", "🫧", "🔬", "🧪"],
       deco: "🧫 🔬 ✨ 🫧",
+      pageBg: "linear-gradient(180deg,#f2f4ff 0%,#fbfbff 60%,#f2f4ff 100%)",
     },
     garden: {
       label: "🌼 Garden",
-      desc: "Taman kecil dengan bunga, lebah, dan kupu-kupu.",
+      desc: "Taman bunga",
       emojis: ["🌼", "🌷", "🐝", "🦋", "🐞", "🌱"],
-      bg: "linear-gradient(180deg,#fff8ea 0%,#fffdf7 55%,#fff5e8 100%)",
       deco: "🌼 🌷 🌿 ☀️",
+      pageBg: "linear-gradient(180deg,#fff9ec 0%,#fffdf8 60%,#fff6e9 100%)",
     },
     wildlife: {
       label: "🦁 Wildlife Reserve",
-      desc: "Suasana cagar alam dengan hewan liar dan alam terbuka.",
-      emojis: ["🦁", "🦓", "🐘", "🦒", "🌴", "🦬"],
-      bg: "linear-gradient(180deg,#fff3db 0%,#fffaf0 55%,#ffefd4 100%)",
+      desc: "Cagar alam",
+      emojis: ["🦁", "🦓", "🐘", "🦒", "🦬", "🐒"],
       deco: "🌴 ☀️ 🪨 🌿",
+      pageBg: "linear-gradient(180deg,#fff5e3 0%,#fffaf1 60%,#fff0d5 100%)",
     },
   };
 
   const state = {
     model: "logistic",
     theme: "forest",
-    optimizationStatus: { type: "idle", text: "Atur target lalu coba optimasi ✨" },
+    targetStatus: {
+      type: "idle",
+      badge: "✨ Ready",
+      title: "Atur parameter dulu",
+      text: "Tiny World akan bereaksi otomatis sesuai hasil modelmu.",
+      current: null,
+      target: null,
+      errorRatio: null,
+    },
   };
 
   function num(id, fallback) {
@@ -93,19 +97,10 @@
     return Number.isFinite(value) ? value : fallback;
   }
 
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-
-  function randomBetween(min, max, digit = 0) {
-    const value = min + Math.random() * (max - min);
-    return Number(value.toFixed(digit));
-  }
-
   function rk4Scalar(y, t, h, f) {
     const k1 = f(t, y);
-    const k2 = f(t + h / 2, y + h * k1 / 2);
-    const k3 = f(t + h / 2, y + h * k2 / 2);
+    const k2 = f(t + h / 2, y + (h * k1) / 2);
+    const k3 = f(t + h / 2, y + (h * k2) / 2);
     const k4 = f(t + h, y + h * k3);
     return y + (h / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
   }
@@ -123,21 +118,19 @@
   }
 
   function extra() {
-    const d = MODELS[state.model].defaults;
     return {
-      H: num("mlH", d.H ?? 50),
-      Q0: num("mlQ0", d.Q0 ?? 9),
-      alpha: num("mlAlpha", d.alpha ?? 0.6),
-      beta: num("mlBeta", d.beta ?? 0.025),
-      gamma: num("mlGamma", d.gamma ?? 0.015),
-      delta: num("mlDelta", d.delta ?? 0.5),
+      H: num("mlH", 50),
+      Q0: num("mlQ0", 9),
+      alpha: num("mlAlpha", 0.6),
+      beta: num("mlBeta", 0.025),
+      gamma: num("mlGamma", 0.015),
+      delta: num("mlDelta", 0.5),
     };
   }
 
   function predatorAt(t, parameter) {
     const p = base.validasiParameter(parameter);
     const { Q0, alpha, beta, gamma, delta } = extra();
-
     const steps = Math.max(40, Math.ceil(t * 20));
     const h = t / steps || 0;
     let P = p.P0;
@@ -210,7 +203,6 @@
     let P = p.P0;
     let Q = Q0;
     let t = 0;
-
     const prey = [{ x: 0, y: P }];
     const predator = [{ x: 0, y: Q }];
 
@@ -234,59 +226,29 @@
     ];
   }
 
-  window.ModelLogistik.validasiParameter = function(parameter) {
-    return base.validasiParameter(parameter);
-  };
-
-  window.ModelLogistik.populasiLogistik = function(t, P0, r, K) {
-    return valueAt(t, { P0, r, K, T: Math.max(Number(t), 0.0001) }, state.model);
-  };
-
-  window.ModelLogistik.buatDataPopulasi = function(parameter, jumlahTitik = 240) {
-    return simulateSeries(parameter, state.model, jumlahTitik)[0].data;
-  };
+  // App lama tetap dipakai; fungsi global ini hanya diarahkan ke model terpilih.
+  window.ModelLogistik.validasiParameter = (parameter) => base.validasiParameter(parameter);
+  window.ModelLogistik.populasiLogistik = (t, P0, r, K) =>
+    valueAt(t, { P0, r, K, T: Math.max(Number(t), 0.0001) }, state.model);
+  window.ModelLogistik.buatDataPopulasi = (parameter, jumlahTitik = 240) =>
+    simulateSeries(parameter, state.model, jumlahTitik)[0].data;
 
   function injectStyle() {
     const style = document.createElement("style");
     style.textContent = `
-      body[data-ml-theme="forest"]{background:${THEMES.forest.bg}}
-      body[data-ml-theme="pond"]{background:${THEMES.pond.bg}}
-      body[data-ml-theme="lab"]{background:${THEMES.lab.bg}}
-      body[data-ml-theme="garden"]{background:${THEMES.garden.bg}}
-      body[data-ml-theme="wildlife"]{background:${THEMES.wildlife.bg}}
-      .model-lab-panel{position:relative;overflow:hidden;border:1px solid var(--garis,#cfdcd8);background:rgba(255,255,255,.92);backdrop-filter:blur(4px);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 10px 28px rgba(24,60,46,.06)}
-      .model-lab-panel h2{margin:0 0 4px;font-size:18px}
-      .model-lab-sub{margin:0 0 12px;color:var(--muted,#5b6f6a);font-size:13px}
-      .ml-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;padding:10px 12px;border-radius:12px;background:linear-gradient(135deg,rgba(31,122,99,.08),rgba(37,99,235,.06))}
-      .ml-hero strong{display:block;font-size:14px}
-      .ml-hero small{color:#5b6f6a}
-      .ml-hero .ml-deco{font-size:24px;letter-spacing:4px;white-space:nowrap}
-      .ml-group-title{margin:12px 0 7px;font-size:12px;font-weight:700;color:var(--muted,#5b6f6a);text-transform:uppercase;letter-spacing:.04em}
+      body{transition:background .35s ease}
+      .model-lab-panel{border:1px solid var(--garis,#cfdcd8);background:rgba(255,255,255,.93);border-radius:14px;padding:16px;margin-bottom:16px;box-shadow:0 10px 28px rgba(24,60,46,.06)}
+      .model-lab-panel h2{margin:0 0 4px;font-size:18px}.model-lab-sub{margin:0 0 13px;color:var(--muted,#5b6f6a);font-size:13px}
+      .ml-group-title{margin:12px 0 7px;font-size:12px;font-weight:700;color:var(--muted,#5b6f6a);text-transform:uppercase;letter-spacing:.05em}
       .ml-radio{display:flex;gap:8px;align-items:center;margin:7px 0;font-size:13px}.ml-radio input{accent-color:var(--hijau,#1f7a63)}
-      .ml-summary,.ml-mood,.ml-presets{margin-top:12px;padding:12px;border-radius:12px;background:#f6faf8;border:1px solid #e1ece8;font-size:12px}
-      .ml-summary strong{display:block;margin-bottom:2px;font-size:14px}
-      .ml-extra{margin-top:12px;padding-top:10px;border-top:1px solid var(--garis,#cfdcd8)}
-      .ml-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ml-extra label{font-size:12px;color:var(--muted,#5b6f6a)}.ml-extra input{width:100%;margin-top:3px}
-      .ml-note{margin:8px 0 0;color:var(--muted,#5b6f6a);font-size:11px;line-height:1.45}
-      .ml-hidden{display:none!important}
-      .ml-preset-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
-      .ml-preset{padding:9px 10px;border-radius:10px;border:1px solid #d4e3dd;background:#fff;cursor:pointer;font-size:12px;font-weight:700;color:#1e3b34}
-      .ml-preset:hover{transform:translateY(-1px);box-shadow:0 5px 14px rgba(25,51,42,.08)}
-      .ml-preset small{display:block;margin-top:2px;font-size:10px;font-weight:400;color:#5b6f6a}
-      .ml-mood-row{display:flex;align-items:center;gap:10px}
-      .ml-badge{display:inline-flex;align-items:center;gap:6px;padding:7px 10px;border-radius:999px;font-weight:700}
-      .ml-badge.idle{background:#eef4f2;color:#31564b}
-      .ml-badge.success{background:#dbf9e6;color:#0f6a35}
-      .ml-badge.warn{background:#fff0c7;color:#9a6300}
-      .ml-badge.fail{background:#ffe1e1;color:#a11c1c}
-      .ml-mood p{margin:8px 0 0;color:#5b6f6a;line-height:1.45}
-      @media(max-width:760px){.ml-preset-grid{grid-template-columns:1fr 1fr}.ml-extra-grid{grid-template-columns:1fr}.ml-hero{flex-direction:column;align-items:flex-start}.ml-hero .ml-deco{font-size:20px}}
+      .ml-summary,.ml-reaction{margin-top:12px;padding:11px;border-radius:11px;border:1px solid #e1ece8;background:#f6faf8;font-size:12px}.ml-summary strong{display:block;margin-bottom:2px;font-size:14px}
+      .ml-extra{margin-top:12px;padding-top:10px;border-top:1px solid var(--garis,#cfdcd8)}.ml-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ml-extra label{font-size:12px;color:var(--muted,#5b6f6a)}.ml-extra input{width:100%;margin-top:3px}
+      .ml-note{margin:7px 0 0;color:var(--muted,#5b6f6a);font-size:11px;line-height:1.45}.ml-hidden{display:none!important}
+      .ml-reaction-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ml-reaction-badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-weight:800}.ml-reaction-badge.idle{background:#edf3f1;color:#31564b}.ml-reaction-badge.low{background:#e7f1ff;color:#245a9f}.ml-reaction-badge.close{background:#fff1c9;color:#8d6300}.ml-reaction-badge.optimal{background:#ddf8e7;color:#0f6a35}.ml-reaction-badge.high{background:#ffe3e3;color:#a11c1c}.ml-reaction-badge.info{background:#efeaff;color:#5b42a7}
+      .ml-reaction strong{font-size:13px}.ml-reaction p{margin:7px 0 0;color:#5b6f6a;line-height:1.45}
+      @media(max-width:760px){.ml-extra-grid{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
-  }
-
-  function dispatch(name, detail = {}) {
-    window.dispatchEvent(new CustomEvent(name, { detail }));
   }
 
   function createPanel() {
@@ -297,15 +259,8 @@
     panel.id = "modelLabPanel";
     panel.className = "model-lab-panel";
     panel.innerHTML = `
-      <div class="ml-hero">
-        <div>
-          <strong>🧪 Tiny Worlds Lab</strong>
-          <small>Pilih model, tema, lalu mainkan parameter secara interaktif.</small>
-        </div>
-        <div id="mlHeroDeco" class="ml-deco">🌲 🌳 🌿 ☁️</div>
-      </div>
-      <h2>Choose Your Model</h2>
-      <p class="model-lab-sub">Semuanya tetap nyambung ke grafik, optimasi, dan Tiny World.</p>
+      <h2>🧪 Choose Your Model</h2>
+      <p class="model-lab-sub">Pilih model dan ecosystem. Parameter tetap diatur dari panel utama di bawah.</p>
 
       <div class="ml-group-title">Population model</div>
       ${Object.entries(MODELS).map(([id, m]) => `
@@ -325,32 +280,19 @@
 
       <div id="mlExtra" class="ml-extra"></div>
 
-      <div class="ml-presets">
-        <div class="ml-group-title" style="margin-top:0">Quick parameter actions</div>
-        <div class="ml-preset-grid">
-          <button class="ml-preset" type="button" data-preset="empty">Kosong<small>mulai kecil</small></button>
-          <button class="ml-preset" type="button" data-preset="default">Normal<small>nilai aman</small></button>
-          <button class="ml-preset" type="button" data-preset="nearfull">Hampir penuh<small>dekat kapasitas</small></button>
-          <button class="ml-preset" type="button" data-preset="boom">Boom<small>pertumbuhan cepat</small></button>
-          <button class="ml-preset" type="button" data-preset="balanced">Stabil<small>lebih kalem</small></button>
-          <button class="ml-preset" type="button" data-preset="random">Acak<small>surprise me</small></button>
-        </div>
-        <p class="ml-note">Tombol ini cuma mengubah input dan slider yang sudah ada, jadi fitur lama tetap aman.</p>
-      </div>
-
       <div class="ml-summary">
-        <span class="ml-group-title" style="margin:0 0 6px">Selected configuration</span>
+        <span class="ml-group-title" style="margin:0 0 5px">Selected configuration</span>
         <strong id="mlSummaryModel">Logistic Growth</strong>
         <span id="mlSummaryTheme">Theme: Forest</span>
-        <p id="mlSummaryDesc" class="ml-note">Pertumbuhan dengan carrying capacity K.</p>
+        <p id="mlSummaryDesc" class="ml-note"></p>
       </div>
 
-      <div class="ml-mood">
-        <div class="ml-mood-row">
-          <span id="mlMoodBadge" class="ml-badge idle">✨ Ready</span>
-          <strong id="mlMoodTitle">Coba atur parameter dulu</strong>
+      <div id="mlReaction" class="ml-reaction">
+        <div class="ml-reaction-head">
+          <span id="mlReactionBadge" class="ml-reaction-badge idle">✨ Ready</span>
+          <strong id="mlReactionTitle">Atur parameter dulu</strong>
         </div>
-        <p id="mlMoodText">Kalau hasil di waktu target mendekati populasi target, nanti muncul respon “Yay!”.</p>
+        <p id="mlReactionText">Tiny World akan bereaksi otomatis sesuai hasil parameter dan target optimasi.</p>
       </div>
     `;
 
@@ -360,10 +302,9 @@
       radio.addEventListener("change", () => {
         state.model = radio.value;
         renderExtra();
-        applyModelDefaults(false);
         applyModelUI();
         refreshApp();
-        refreshOptimizationMood();
+        refreshTargetStatus();
         dispatch("modellab:modelchange", { model: state.model });
       });
     });
@@ -371,15 +312,9 @@
     panel.querySelectorAll('input[name="mlTheme"]').forEach((radio) => {
       radio.addEventListener("change", () => {
         state.theme = radio.value;
-        applyThemeDecor();
+        applyTheme();
         updateSummary();
         dispatch("modellab:themechange", { theme: state.theme });
-      });
-    });
-
-    panel.querySelectorAll(".ml-preset").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        applyPreset(btn.dataset.preset);
       });
     });
   }
@@ -391,26 +326,23 @@
   function renderExtra() {
     const box = document.getElementById("mlExtra");
     if (!box) return;
-    const d = MODELS[state.model].defaults;
 
     if (state.model === "harvesting") {
       box.innerHTML = `
         <div class="ml-group-title">Additional parameter</div>
-        <div class="ml-extra-grid">
-          ${extraField("mlH", "Harvesting rate (H)", d.H ?? 50, 1)}
-        </div>
+        <div class="ml-extra-grid">${extraField("mlH", "Harvesting rate (H)", 50, 1)}</div>
       `;
     } else if (state.model === "predatorPrey") {
       box.innerHTML = `
         <div class="ml-group-title">Predator–Prey parameters</div>
         <div class="ml-extra-grid">
-          ${extraField("mlQ0", "Predator awal (Q₀)", d.Q0 ?? 9, 1)}
-          ${extraField("mlAlpha", "α", d.alpha ?? 0.6, 0.01)}
-          ${extraField("mlBeta", "β", d.beta ?? 0.025, 0.001)}
-          ${extraField("mlGamma", "γ", d.gamma ?? 0.015, 0.001)}
-          ${extraField("mlDelta", "δ", d.delta ?? 0.5, 0.01)}
+          ${extraField("mlQ0", "Predator awal (Q₀)", 9, 1)}
+          ${extraField("mlAlpha", "α", 0.6, 0.01)}
+          ${extraField("mlBeta", "β", 0.025, 0.001)}
+          ${extraField("mlGamma", "γ", 0.015, 0.001)}
+          ${extraField("mlDelta", "δ", 0.5, 0.01)}
         </div>
-        <p class="ml-note">Grafik utama dan Tiny World menampilkan prey supaya tetap satu populasi visual.</p>
+        <p class="ml-note">Untuk model ini, Tiny World menampilkan prey sebagai satu populasi visual.</p>
       `;
     } else {
       box.innerHTML = "";
@@ -419,8 +351,8 @@
     box.querySelectorAll("input").forEach((input) => {
       input.addEventListener("input", () => {
         refreshApp();
-        refreshOptimizationMood();
-        dispatch("modellab:extrachange", { model: state.model });
+        refreshTargetStatus();
+        dispatch("modellab:parameterchange", {});
       });
     });
   }
@@ -429,135 +361,21 @@
     const model = MODELS[state.model];
     const formula = document.getElementById("rumusModel");
     const solution = document.getElementById("rumusAnalitik");
-
     if (!formula || !solution) return;
 
-    if (window.katex && model.formula.startsWith("\\")) {
-      try { katex.render(model.formula, formula, { throwOnError: false }); }
-      catch { formula.textContent = model.formula; }
-    } else {
-      formula.textContent = model.formula;
-    }
+    try {
+      if (window.katex && model.formula.startsWith("\\")) katex.render(model.formula, formula, { throwOnError: false });
+      else formula.textContent = model.formula;
+    } catch { formula.textContent = model.formula; }
 
-    if (window.katex && model.solution.startsWith("\\")) {
-      try { katex.render(model.solution, solution, { throwOnError: false }); }
-      catch { solution.textContent = model.solution; }
-    } else {
-      solution.textContent = model.solution;
-    }
+    try {
+      if (window.katex && model.solution.startsWith("\\")) katex.render(model.solution, solution, { throwOnError: false });
+      else solution.textContent = model.solution;
+    } catch { solution.textContent = model.solution; }
   }
 
-  function applyThemeDecor() {
-    document.body.setAttribute("data-ml-theme", state.theme);
-    const deco = document.getElementById("mlHeroDeco");
-    if (deco) deco.textContent = THEMES[state.theme].deco;
-  }
-
-  function setInputValue(id, value) {
-    const input = document.getElementById(id);
-    const slider = document.getElementById(`slider_${id}`);
-    if (input) input.value = value;
-    if (slider) slider.value = value;
-  }
-
-  function syncAndRefresh() {
-    ["P0", "r", "K", "T"].forEach((id) => {
-      const input = document.getElementById(id);
-      input?.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-    refreshOptimizationMood();
-  }
-
-  function applyModelDefaults(refresh = true) {
-    const d = MODELS[state.model].defaults;
-    setInputValue("P0", d.P0 ?? 50);
-    if (d.r !== undefined) setInputValue("r", d.r);
-    if (d.K !== undefined) setInputValue("K", d.K);
-    if (d.T !== undefined) setInputValue("T", d.T);
-
-    if (document.getElementById("mlH") && d.H !== undefined) document.getElementById("mlH").value = d.H;
-    if (document.getElementById("mlQ0") && d.Q0 !== undefined) document.getElementById("mlQ0").value = d.Q0;
-    if (document.getElementById("mlAlpha") && d.alpha !== undefined) document.getElementById("mlAlpha").value = d.alpha;
-    if (document.getElementById("mlBeta") && d.beta !== undefined) document.getElementById("mlBeta").value = d.beta;
-    if (document.getElementById("mlGamma") && d.gamma !== undefined) document.getElementById("mlGamma").value = d.gamma;
-    if (document.getElementById("mlDelta") && d.delta !== undefined) document.getElementById("mlDelta").value = d.delta;
-
-    if (refresh) syncAndRefresh();
-  }
-
-  function applyPreset(kind) {
-    const K = num("K", MODELS[state.model].defaults.K ?? 1000);
-
-    if (kind === "default") {
-      applyModelDefaults();
-      dispatch("modellab:presetchange", { kind, model: state.model });
-      return;
-    }
-
-    if (state.model === "predatorPrey") {
-      if (kind === "empty") {
-        setInputValue("P0", 20); setInputValue("T", 20);
-        document.getElementById("mlQ0").value = 4;
-      } else if (kind === "nearfull") {
-        setInputValue("P0", 120); setInputValue("T", 30);
-        document.getElementById("mlQ0").value = 8;
-      } else if (kind === "boom") {
-        setInputValue("P0", 90); setInputValue("T", 40);
-        document.getElementById("mlQ0").value = 3;
-        document.getElementById("mlAlpha").value = 0.8;
-        document.getElementById("mlBeta").value = 0.015;
-      } else if (kind === "balanced") {
-        setInputValue("P0", 60); setInputValue("T", 30);
-        document.getElementById("mlQ0").value = 9;
-        document.getElementById("mlAlpha").value = 0.6;
-        document.getElementById("mlBeta").value = 0.025;
-        document.getElementById("mlGamma").value = 0.015;
-        document.getElementById("mlDelta").value = 0.5;
-      } else if (kind === "random") {
-        setInputValue("P0", randomBetween(20, 140));
-        setInputValue("T", randomBetween(20, 50));
-        document.getElementById("mlQ0").value = randomBetween(3, 16);
-        document.getElementById("mlAlpha").value = randomBetween(0.35, 0.95, 2);
-        document.getElementById("mlBeta").value = randomBetween(0.008, 0.04, 3);
-        document.getElementById("mlGamma").value = randomBetween(0.008, 0.03, 3);
-        document.getElementById("mlDelta").value = randomBetween(0.2, 0.8, 2);
-      }
-    } else {
-      if (kind === "empty") {
-        setInputValue("P0", 10);
-        if (state.model !== "exponential") setInputValue("K", K);
-        setInputValue("r", 0.12);
-        setInputValue("T", 18);
-        if (document.getElementById("mlH")) document.getElementById("mlH").value = 20;
-      } else if (kind === "nearfull") {
-        setInputValue("P0", Math.round(0.9 * K));
-        if (state.model !== "exponential") setInputValue("K", K);
-        setInputValue("r", 0.18);
-        setInputValue("T", 16);
-        if (document.getElementById("mlH")) document.getElementById("mlH").value = 15;
-      } else if (kind === "boom") {
-        setInputValue("P0", clamp(Math.round(0.15 * K), 20, 5000));
-        setInputValue("r", state.model === "exponential" ? 0.45 : 0.85);
-        setInputValue("T", 35);
-        if (state.model !== "exponential") setInputValue("K", Math.max(500, K));
-        if (document.getElementById("mlH")) document.getElementById("mlH").value = 5;
-      } else if (kind === "balanced") {
-        setInputValue("P0", clamp(Math.round(0.35 * K), 20, 5000));
-        setInputValue("r", state.model === "exponential" ? 0.2 : 0.32);
-        setInputValue("T", 24);
-        if (state.model !== "exponential") setInputValue("K", K);
-        if (document.getElementById("mlH")) document.getElementById("mlH").value = 40;
-      } else if (kind === "random") {
-        setInputValue("P0", randomBetween(10, Math.max(80, Math.min(2000, K))));
-        setInputValue("r", randomBetween(0.08, state.model === "exponential" ? 0.65 : 1.2, 2));
-        setInputValue("T", randomBetween(12, 45));
-        if (state.model !== "exponential") setInputValue("K", randomBetween(300, 2500));
-        if (document.getElementById("mlH")) document.getElementById("mlH").value = randomBetween(0, 120);
-      }
-    }
-
-    syncAndRefresh();
-    dispatch("modellab:presetchange", { kind, model: state.model });
+  function applyTheme() {
+    document.body.style.background = THEMES[state.theme].pageBg;
   }
 
   function applyModelUI() {
@@ -572,7 +390,7 @@
     const optButton = document.getElementById("btnOpt");
     if (optButton) {
       optButton.disabled = state.model === "predatorPrey";
-      optButton.title = state.model === "predatorPrey" ? "Predator–Prey tidak memakai parameter r yang sama." : "";
+      optButton.title = state.model === "predatorPrey" ? "Predator–Prey tidak memakai r tunggal." : "";
     }
 
     setFormula();
@@ -580,62 +398,101 @@
   }
 
   function updateSummary() {
-    const m = MODELS[state.model];
-    const themeObj = THEMES[state.theme];
-
+    const model = MODELS[state.model];
+    const theme = THEMES[state.theme];
     const modelEl = document.getElementById("mlSummaryModel");
     const themeEl = document.getElementById("mlSummaryTheme");
     const descEl = document.getElementById("mlSummaryDesc");
 
-    if (modelEl) modelEl.textContent = m.name;
-    if (themeEl) themeEl.textContent = `Theme: ${themeObj.label.replace(/^.\s*/, "")}`;
-    if (descEl) descEl.textContent = `${m.description} ${themeObj.desc}`;
+    if (modelEl) modelEl.textContent = model.name;
+    if (themeEl) themeEl.textContent = `Theme: ${theme.label.replace(/^.\s*/, "")}`;
+    if (descEl) descEl.textContent = `${model.description} · ${theme.desc}`;
   }
 
-  function setMood(type, badge, title, text) {
-    state.optimizationStatus = { type, badge, title, text };
-    const badgeEl = document.getElementById("mlMoodBadge");
-    const titleEl = document.getElementById("mlMoodTitle");
-    const textEl = document.getElementById("mlMoodText");
+  function setTargetStatus(type, badge, title, text, current = null, target = null, errorRatio = null) {
+    state.targetStatus = { type, badge, title, text, current, target, errorRatio };
+    const badgeEl = document.getElementById("mlReactionBadge");
+    const titleEl = document.getElementById("mlReactionTitle");
+    const textEl = document.getElementById("mlReactionText");
     if (badgeEl) {
-      badgeEl.className = `ml-badge ${type}`;
+      badgeEl.className = `ml-reaction-badge ${type}`;
       badgeEl.textContent = badge;
     }
     if (titleEl) titleEl.textContent = title;
     if (textEl) textEl.textContent = text;
-    dispatch("modellab:optimizationstatus", state.optimizationStatus);
+    dispatch("modellab:statuschange", { ...state.targetStatus });
   }
 
-  function refreshOptimizationMood() {
+  function getCurrentParameter() {
+    return {
+      P0: num("P0", 50),
+      r: num("r", 0.4),
+      K: num("K", 1000),
+      T: num("T", 30),
+    };
+  }
+
+  function refreshTargetStatus() {
     if (state.model === "predatorPrey") {
-      setMood("warn", "🧪 Predator–Prey", "Mode dua populasi aktif", "Optimasi r dimatikan karena model ini memakai α, β, γ, dan δ.");
+      setTargetStatus("info", "🧪 Dynamic", "Predator–Prey aktif", "Model ini punya dua populasi, jadi tidak ada satu nilai r optimal seperti model lainnya.");
       return;
     }
 
     const pTarget = num("pTarget", NaN);
     const tTarget = num("tTarget", NaN);
     if (!Number.isFinite(pTarget) || !Number.isFinite(tTarget) || pTarget <= 0 || tTarget <= 0) {
-      setMood("idle", "✨ Ready", "Coba atur parameter dulu", "Kalau hasil di waktu target mendekati populasi target, nanti muncul respon “Yay!”.");
+      setTargetStatus("idle", "✨ Ready", "Atur parameter dulu", "Isi target optimasi lalu ubah parameter. Reaksi akan berubah otomatis.");
       return;
     }
 
     try {
-      const current = window.ModelLab.getCurrentParameter();
-      const result = valueAt(tTarget, current, state.model);
-      const error = Math.abs(result - pTarget);
-      const relative = error / Math.max(1, pTarget);
+      const currentParam = getCurrentParameter();
+      const current = valueAt(tTarget, currentParam, state.model);
+      const errorRatio = Math.abs(current - pTarget) / Math.max(1, pTarget);
 
-      if (relative <= 0.02) {
-        setMood("success", "🎉 Yay!", "Target hampir pas", `Pada t = ${tTarget}, populasi ≈ ${Math.round(result)}. Error sangat kecil, jadi setting-mu sudah keren banget.`);
-      } else if (relative <= 0.1) {
-        setMood("warn", "👏 Close!", "Sudah cukup dekat", `Pada t = ${tTarget}, populasi ≈ ${Math.round(result)}. Tinggal sedikit tuning lagi biar makin presisi.`);
-      } else if (result < pTarget) {
-        setMood("fail", "🌱 Naikkan growth", "Target masih kurang", `Populasi baru ≈ ${Math.round(result)}. Coba naikkan r, P₀, atau T; kalau harvesting aktif, kecilkan H.`);
+      if (errorRatio <= 0.025) {
+        setTargetStatus(
+          "optimal",
+          "🎉 Yay!",
+          "Segini pas!",
+          `Parameter kamu sudah menghasilkan populasi sekitar ${Math.round(current)} pada t=${tTarget}, sangat dekat dengan target ${Math.round(pTarget)}.`,
+          current,
+          pTarget,
+          errorRatio,
+        );
+      } else if (errorRatio <= 0.1) {
+        setTargetStatus(
+          "close",
+          "👀 Dikit lagi!",
+          "Hampir optimal",
+          `Hasilnya sekitar ${Math.round(current)}. Targetnya ${Math.round(pTarget)}, jadi tinggal tuning sedikit lagi.`,
+          current,
+          pTarget,
+          errorRatio,
+        );
+      } else if (current < pTarget) {
+        setTargetStatus(
+          "low",
+          "🌱 Ayo tambah lagi!",
+          "Masih terlalu sedikit",
+          `Hasilnya baru sekitar ${Math.round(current)} dari target ${Math.round(pTarget)}. Coba naikkan growth rate, populasi awal, atau waktu.`,
+          current,
+          pTarget,
+          errorRatio,
+        );
       } else {
-        setMood("warn", "🚀 Kebanyakan", "Target terlewati", `Populasi ≈ ${Math.round(result)}. Coba kecilkan r atau P₀, atau percepat harvesting.`);
+        setTargetStatus(
+          "high",
+          "😵 Keramean!",
+          "Populasinya kebanyakan",
+          `Hasilnya sekitar ${Math.round(current)}, melewati target ${Math.round(pTarget)}. Coba turunkan growth rate atau populasi awal.`,
+          current,
+          pTarget,
+          errorRatio,
+        );
       }
     } catch (error) {
-      setMood("fail", "⚠️ Cek input", "Ada parameter belum valid", error.message || "Periksa lagi input model dan target.");
+      setTargetStatus("high", "⚠️ Cek input", "Ada parameter belum valid", error.message || "Periksa input model.");
     }
   }
 
@@ -644,11 +501,7 @@
     const c = canvas && window.Chart?.getChart ? Chart.getChart(canvas) : null;
     if (!c) return;
 
-    const m = MODELS[state.model];
-
-    if (c.data.datasets[0]) {
-      c.data.datasets[0].label = `${m.name} · Model Utama`;
-    }
+    if (c.data.datasets[0]) c.data.datasets[0].label = `${MODELS[state.model].name} · Model Utama`;
 
     if (state.model === "exponential" || state.model === "predatorPrey") {
       c.data.datasets = c.data.datasets.filter((d) => !String(d.label || "").startsWith("K Utama"));
@@ -664,21 +517,30 @@
       p0.dispatchEvent(new Event("input", { bubbles: true }));
       setTimeout(() => {
         adjustChart();
-        refreshOptimizationMood();
+        refreshTargetStatus();
       }, 0);
     }
   }
 
+  function dispatch(name, detail) {
+    window.dispatchEvent(new CustomEvent(name, { detail }));
+  }
+
   function getEmojiOptions() {
-    const themeEmojis = THEMES[state.theme].emojis;
-    const modelPreferred = {
-      exponential: [themeEmojis[0], themeEmojis[2], themeEmojis[5] || themeEmojis[1]],
-      logistic: [themeEmojis[0], themeEmojis[1], themeEmojis[2]],
-      harvesting: [themeEmojis[0], themeEmojis[3] || themeEmojis[1], themeEmojis[4] || themeEmojis[2]],
-      predatorPrey: [themeEmojis[0], themeEmojis[1], themeEmojis[2]],
-    };
-    const preferred = modelPreferred[state.model] || [];
-    return Array.from(new Set([...preferred, ...themeEmojis])).slice(0, 6);
+    return THEMES[state.theme].emojis.slice();
+  }
+
+  function getDisplayReference(series) {
+    const target = num("pTarget", NaN);
+    if (state.model !== "predatorPrey" && Number.isFinite(target) && target > 0) return target;
+
+    const K = num("K", NaN);
+    if (state.model === "logistic" || state.model === "harvesting") {
+      if (Number.isFinite(K) && K > 0) return K;
+    }
+
+    const maxSeries = Math.max(1, ...(series || []).map((p) => Number(p.y) || 0));
+    return maxSeries;
   }
 
   window.ModelLab = {
@@ -687,44 +549,34 @@
     getDefinition: () => MODELS[state.model],
     getThemeMeta: () => THEMES[state.theme],
     getEmojiOptions,
+    getTargetStatus: () => ({ ...state.targetStatus }),
     getCurrentExtra: () => extra(),
-    getOptimizationStatus: () => ({ ...state.optimizationStatus }),
-    valueAt: (t, parameter) => valueAt(t, parameter, state.model),
+    getCurrentParameter,
+    getDisplayReference,
+    refreshTargetStatus,
     simulateSeries(parameter, jumlahTitik = 120) {
       return simulateSeries(parameter, state.model, jumlahTitik);
-    },
-    getCurrentParameter() {
-      return {
-        P0: num("P0", 50),
-        r: num("r", 0.4),
-        K: num("K", 1000),
-        T: num("T", 30),
-      };
     },
   };
 
   injectStyle();
   createPanel();
   renderExtra();
-  applyThemeDecor();
+  applyTheme();
   applyModelUI();
-  applyModelDefaults(false);
 
   ["P0", "r", "K", "T", "pTarget", "tTarget", "rMin", "rMax"].forEach((id) => {
     document.getElementById(id)?.addEventListener("input", () => {
       setTimeout(() => {
         adjustChart();
-        refreshOptimizationMood();
+        refreshTargetStatus();
+        dispatch("modellab:parameterchange", {});
       }, 0);
     });
   });
 
-  document.getElementById("btnOpt")?.addEventListener("click", () => {
-    setTimeout(refreshOptimizationMood, 80);
-  });
-  document.getElementById("btnClear")?.addEventListener("click", () => {
-    setTimeout(refreshOptimizationMood, 30);
-  });
+  document.getElementById("btnOpt")?.addEventListener("click", () => setTimeout(refreshTargetStatus, 100));
+  document.getElementById("btnClear")?.addEventListener("click", () => setTimeout(refreshTargetStatus, 50));
 
   refreshApp();
 })();
