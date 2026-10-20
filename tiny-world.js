@@ -34,7 +34,7 @@
       .tw-bottom{position:absolute;left:12px;right:12px;bottom:12px;z-index:3;display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}.tw-reaction{font-size:13px;padding:7px 11px}
       .tw-reaction.low{background:#e7f1ff;color:#245a9f}.tw-reaction.close{background:#fff1c9;color:#8d6300}.tw-reaction.optimal{background:#ddf8e7;color:#0f6a35}.tw-reaction.high{background:#ffe3e3;color:#a11c1c}.tw-reaction.info,.tw-reaction.idle{background:#edf3f1;color:#31564b}
       .tw-world.optimal,.tw-preview.optimal{box-shadow:0 0 0 3px rgba(36,167,92,.18),0 18px 45px rgba(36,167,92,.18)}.tw-world.high,.tw-preview.high{box-shadow:0 0 0 3px rgba(201,55,55,.12),0 18px 45px rgba(201,55,55,.13)}
-      .tw-settings{padding:14px;background:#fff;border:1px solid #d8e4e0;border-radius:14px}.tw-setting{margin-bottom:12px}.tw-setting label{display:block;margin-bottom:4px;color:#5b6f6a;font-size:12px;font-weight:700}.tw-setting select,.tw-setting input{width:100%}.tw-emojis{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tw-e{padding:7px;border:1px solid #cfdcd8;border-radius:10px;background:#fff;font-size:24px;cursor:pointer}.tw-e.on{border-color:#1f7a63;background:#e4f1ed}.tw-controls{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 12px}.tw-note{font-size:11px;color:#5b6f6a;line-height:1.45}
+      .tw-settings{padding:14px;background:#fff;border:1px solid #d8e4e0;border-radius:14px}.tw-setting{margin-bottom:12px}.tw-setting label{display:block;margin-bottom:4px;color:#5b6f6a;font-size:12px;font-weight:700}.tw-setting select,.tw-setting input{width:100%}.tw-emojis{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:210px;overflow:auto;padding-right:2px}.tw-e{padding:7px;border:1px solid #cfdcd8;border-radius:10px;background:#fff;font-size:24px;cursor:pointer}.tw-e.on{border-color:#1f7a63;background:#e4f1ed}.tw-controls{display:flex;gap:8px;flex-wrap:wrap;padding:0 12px 12px}.tw-note{font-size:11px;color:#5b6f6a;line-height:1.45}
       .tw-spark{position:absolute;z-index:4;font-size:18px;animation:twSpark .9s ease-out forwards;pointer-events:none}@keyframes twSpark{0%{transform:translateY(12px) scale(.4);opacity:0}30%{opacity:1}100%{transform:translateY(-36px) scale(1.15);opacity:0}}
       @media(max-width:760px){.tw-main{grid-template-columns:1fr}.tw-settings{order:-1}.tw-world{min-height:380px}.tw-preview{height:160px}}
     `;
@@ -102,7 +102,6 @@
             <div class="tw-setting"><label>Population emoji</label><div id="twEmojis" class="tw-emojis"></div></div>
             <div class="tw-setting"><label>Simulation speed</label><select id="twSpeed"><option value="900">0.5×</option><option value="500" selected>1×</option><option value="250">2×</option></select></div>
             <div class="tw-setting"><label>Emoji size: <span id="twSizeText">30</span>px</label><input id="twSize" type="range" min="20" max="46" value="30"></div>
-            <p class="tw-note">Tidak ada mode “crowded/sparse”. Kepadatan dunia sepenuhnya mengikuti hasil parameter. Target optimal ≈ 40 emoji; lebih rendah terlihat lebih kosong, lebih tinggi otomatis makin ramai.</p>
           </aside>
         </div>
         <div class="tw-controls">

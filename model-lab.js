@@ -16,26 +16,26 @@
     exponential: {
       name: "Exponential Growth",
       description: "Pertumbuhan tanpa carrying capacity.",
-      formula: String.raw`\frac{dP}{dt}=rP`,
-      solution: String.raw`P(t)=P_0e^{rt}`,
+      formula: String.raw`\displaystyle \frac{dP}{dt}=rP`,
+      solution: String.raw`\displaystyle P(t)=P_0e^{rt}`,
     },
     logistic: {
       name: "Logistic Growth",
       description: "Pertumbuhan dengan carrying capacity K.",
-      formula: String.raw`\frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)`,
-      solution: String.raw`P(t)=\frac{K}{1+\left(\frac{K-P_0}{P_0}\right)e^{-rt}}`,
+      formula: String.raw`\displaystyle \frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)`,
+      solution: String.raw`\displaystyle P(t)=\frac{K}{1+\left(\frac{K-P_0}{P_0}\right)e^{-rt}}`,
     },
     harvesting: {
       name: "Logistic + Harvesting",
       description: "Model logistik dengan pengurangan populasi konstan H.",
-      formula: String.raw`\frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)-H`,
-      solution: "Simulasi numerik RK4",
+      formula: String.raw`\displaystyle \frac{dP}{dt}=rP\left(1-\frac{P}{K}\right)-H`,
+      solution: "Solusi numerik: Runge–Kutta orde 4 (RK4)",
     },
     predatorPrey: {
       name: "Predator–Prey",
       description: "Model dua populasi Lotka–Volterra. Tiny World menampilkan prey sebagai populasi utama.",
-      formula: String.raw`\frac{dP}{dt}=\alpha P-\beta PQ,\quad \frac{dQ}{dt}=\gamma PQ-\delta Q`,
-      solution: "Simulasi numerik RK4",
+      formula: String.raw`\displaystyle \frac{dP}{dt}=\alpha P-\beta PQ,\qquad \frac{dQ}{dt}=\gamma PQ-\delta Q`,
+      solution: "Solusi numerik: Runge–Kutta orde 4 (RK4)",
     },
   };
 
@@ -43,35 +43,35 @@
     forest: {
       label: "🌲 Forest",
       desc: "Hutan hijau",
-      emojis: ["🐇", "🦌", "🦔", "🦋", "🌲", "🍄"],
+      emojis: ["🐇", "🦌", "🦔", "🐿️", "🦊", "🦉", "🦋", "🐞", "🐛", "🌲", "🌿", "🍄"],
       deco: "🌲 🌳 🌿 ☁️",
       pageBg: "linear-gradient(180deg,#edf8f3 0%,#f7fbf9 60%,#eef7f2 100%)",
     },
     pond: {
       label: "🌊 Pond",
       desc: "Kolam air",
-      emojis: ["🐟", "🐸", "🦆", "🦐", "🪷", "🐚"],
+      emojis: ["🐟", "🐠", "🐡", "🐬", "🐳", "🦀", "🦞", "🦐", "🐙", "🦑", "🪼", "🐚", "🪸", "🪷"],
       deco: "☁️ 🌊 🪷 💧",
       pageBg: "linear-gradient(180deg,#eefaff 0%,#f9fdff 60%,#eef9ff 100%)",
     },
     lab: {
       label: "🧫 Microbiology Lab",
       desc: "Laboratorium mikrobiologi",
-      emojis: ["🦠", "🧫", "🧬", "🫧", "🔬", "🧪"],
+      emojis: ["🦠", "🧫", "🧬", "🔬", "🧪", "⚗️", "🫧", "💉", "💊", "🔎", "✨", "🧴"],
       deco: "🧫 🔬 ✨ 🫧",
       pageBg: "linear-gradient(180deg,#f2f4ff 0%,#fbfbff 60%,#f2f4ff 100%)",
     },
     garden: {
       label: "🌼 Garden",
       desc: "Taman bunga",
-      emojis: ["🌼", "🌷", "🐝", "🦋", "🐞", "🌱"],
+      emojis: ["🌼", "🌷", "🌻", "🌹", "🌺", "🌸", "🪻", "🌱", "🐝", "🦋", "🐞", "🪲", "🐛", "🪱"],
       deco: "🌼 🌷 🌿 ☀️",
       pageBg: "linear-gradient(180deg,#fff9ec 0%,#fffdf8 60%,#fff6e9 100%)",
     },
     wildlife: {
       label: "🦁 Wildlife Reserve",
       desc: "Cagar alam",
-      emojis: ["🦁", "🦓", "🐘", "🦒", "🦬", "🐒"],
+      emojis: ["🦁", "🦓", "🐘", "🦒", "🦬", "🐒", "🦏", "🐆", "🐊", "🦅", "🐍", "🦜"],
       deco: "🌴 ☀️ 🪨 🌿",
       pageBg: "linear-gradient(180deg,#fff5e3 0%,#fffaf1 60%,#fff0d5 100%)",
     },
@@ -244,6 +244,10 @@
       .ml-summary,.ml-reaction{margin-top:12px;padding:11px;border-radius:11px;border:1px solid #e1ece8;background:#f6faf8;font-size:12px}.ml-summary strong{display:block;margin-bottom:2px;font-size:14px}
       .ml-extra{margin-top:12px;padding-top:10px;border-top:1px solid var(--garis,#cfdcd8)}.ml-extra-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ml-extra label{font-size:12px;color:var(--muted,#5b6f6a)}.ml-extra input{width:100%;margin-top:3px}
       .ml-note{margin:7px 0 0;color:var(--muted,#5b6f6a);font-size:11px;line-height:1.45}.ml-hidden{display:none!important}
+      #header h1{line-height:1.2;margin-bottom:10px}
+      #header .rumus{overflow-x:auto;overflow-y:hidden;white-space:nowrap;padding:2px 0;min-height:34px}
+      #header .rumus .katex{font-size:1.12em}
+      @media(max-width:760px){#header h1{font-size:26px}#header .rumus .katex{font-size:1em}}
       .ml-reaction-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.ml-reaction-badge{display:inline-flex;padding:6px 9px;border-radius:999px;font-weight:800}.ml-reaction-badge.idle{background:#edf3f1;color:#31564b}.ml-reaction-badge.low{background:#e7f1ff;color:#245a9f}.ml-reaction-badge.close{background:#fff1c9;color:#8d6300}.ml-reaction-badge.optimal{background:#ddf8e7;color:#0f6a35}.ml-reaction-badge.high{background:#ffe3e3;color:#a11c1c}.ml-reaction-badge.info{background:#efeaff;color:#5b42a7}
       .ml-reaction strong{font-size:13px}.ml-reaction p{margin:7px 0 0;color:#5b6f6a;line-height:1.45}
       @media(max-width:760px){.ml-extra-grid{grid-template-columns:1fr}}
@@ -361,17 +365,38 @@
     const model = MODELS[state.model];
     const formula = document.getElementById("rumusModel");
     const solution = document.getElementById("rumusAnalitik");
+    const title = document.querySelector("#header h1");
+
+    if (title) {
+      title.textContent = `Simulator Populasi · ${model.name}`;
+      document.title = `Simulator Populasi · ${model.name}`;
+    }
+
     if (!formula || !solution) return;
 
-    try {
-      if (window.katex && model.formula.startsWith("\\")) katex.render(model.formula, formula, { throwOnError: false });
-      else formula.textContent = model.formula;
-    } catch { formula.textContent = model.formula; }
+    const renderMath = (latex, element) => {
+      if (!window.katex) {
+        element.textContent = latex;
+        return;
+      }
+      try {
+        katex.render(latex, element, {
+          throwOnError: false,
+          displayMode: false,
+          strict: false,
+        });
+      } catch {
+        element.textContent = latex;
+      }
+    };
 
-    try {
-      if (window.katex && model.solution.startsWith("\\")) katex.render(model.solution, solution, { throwOnError: false });
-      else solution.textContent = model.solution;
-    } catch { solution.textContent = model.solution; }
+    renderMath(model.formula, formula);
+
+    if (model.solution.startsWith("\\displaystyle") || model.solution.includes("\\frac") || model.solution.includes("^{")) {
+      renderMath(model.solution, solution);
+    } else {
+      solution.textContent = model.solution;
+    }
   }
 
   function applyTheme() {
